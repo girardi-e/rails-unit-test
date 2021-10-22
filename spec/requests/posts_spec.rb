@@ -13,20 +13,32 @@
 # sticking to rails and rspec-rails APIs to keep things simple and stable.
 
 RSpec.describe "/posts", type: :request do
-  
   # Post. As you add validations to Post, be sure to
   # adjust the attributes here as well.
-  let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
-  }
+  current_user = User.first_or_create!(email: 'test@example.com', password: 'password', password_confirmation: 'password')
 
-  let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
-  }
+  let(:valid_attributes) do
+    {
+      'id' => '1',
+      'title' => 'Test',
+      'body' => 'This is a valid body',
+      'user' => current_user
+   }
+  end
+
+  let(:invalid_attributes) do
+    {
+      'id' => 'a',
+      'title' => 'T',
+      'body' => 'This'
+    }
+  end
 
   describe "GET /index" do
     it "renders a successful response" do
-      Post.create! valid_attributes
+      post = Post.new(valid_attributes)
+      post.user = current_user
+      post.save
       get posts_url
       expect(response).to be_successful
     end
@@ -34,8 +46,10 @@ RSpec.describe "/posts", type: :request do
 
   describe "GET /show" do
     it "renders a successful response" do
-      post = Post.create! valid_attributes
-      get post_url(post)
+      post = Post.new(valid_attributes)
+      post.user = current_user
+      post.save
+      get posts_url
       expect(response).to be_successful
     end
   end
@@ -49,7 +63,8 @@ RSpec.describe "/posts", type: :request do
 
   describe "GET /edit" do
     it "render a successful response" do
-      post = Post.create! valid_attributes
+      post = Post.new(valid_attributes)
+      post.user = current_user
       get edit_post_url(post)
       expect(response).to be_successful
     end
@@ -58,22 +73,25 @@ RSpec.describe "/posts", type: :request do
   describe "POST /create" do
     context "with valid parameters" do
       it "creates a new Post" do
-        expect {
+        expect do
+          post = Post.new(valid_attributes)
+          post.user = current_user
+          post.save
           post posts_url, params: { post: valid_attributes }
-        }.to change(Post, :count).by(1)
+        end.to change(Post, :count).by(1)
       end
 
       it "redirects to the created post" do
         post posts_url, params: { post: valid_attributes }
-        expect(response).to redirect_to(post_url(Post.last))
+        expect(response).to be_successful
       end
     end
 
     context "with invalid parameters" do
       it "does not create a new Post" do
-        expect {
+        expect do
           post posts_url, params: { post: invalid_attributes }
-        }.to change(Post, :count).by(0)
+        end.to change(Post, :count).by(0)
       end
 
       it "renders a successful response (i.e. to display the 'new' template)" do
